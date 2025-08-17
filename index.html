@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>KopiKita — Toko Kopi Interaktif</title>
+    <meta name="description" content="Website e‑commerce kopi yang interaktif dengan animasi dan keranjang belanja.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --surface: #151518;
+            --text: #e8e8ea;
+            --muted: #a1a1aa;
+            --brand: #b07a3f;
+            /* warna kopi */
+            --brand-2: #6b4b2a;
+            --ring: rgba(176, 122, 63, 0.45);
+            --card: #1b1b1f;
+            --good: #3fb074;
+            --danger: #e36363;
+            --shadow: 0 10px 30px rgba(0, 0, 0, .35);
+        }
+
+        /* Light mode */
+        .light {
+            --bg: #f7f7f8;
+            --surface: #ffffff;
+            --text: #161619;
+            --muted: #5a5a63;
+            --card: #ffffff;
+            --ring: rgba(176, 122, 63, 0.25);
+            --shadow: 0 8px 20px rgba(0, 0, 0, .08);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            margin: 0;
+            font-family: Poppins, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, "Helvetica Neue", Arial;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        img {
+            max-width: 100%;
+            display: block;
+        }
+
+        button {
+            font: inherit;
+        }
+
+        /* Canvas background */
+        #fx-bg {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: radial-gradient(1200px 500px at 80% -10%, rgba(176, 122, 63, .25), transparent), radial-gradient(1000px 400px at -10% -20%, rgba(255, 255, 255, .06), transparent), linear-gradient(180deg, rgba(255, 255, 255, .02), transparent 20%);
+        }
+
+        /* Navbar */
+        .nav {
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            backdrop-filter: blur(8px);
+            background: color-mix(in oklab, var(--bg), transparent 35%);
+            border-bottom: 1px solid color-mix(in oklab, var(--text), transparent 90%);
+        }
+
+        .nav-wrap {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: .8rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .brand {
+            font-weight: 800;
+            letter-spacing: .3px;
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+        }
+
+        .bean {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #c99257, #6b4323);
+            box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .04), var(--shadow);
+            position: relative;
+        }
+
+        .bean::after {
+            content: "";
+            position: absolute;
+            top: 4px;
+            bottom: 4px;
+            left: 50%;
+            width: 3px;
+            transform: skewX(-10deg);
+            background: rgba(255, 255, 255, .4);
+            mix-blend-mode: soft-light;
+            border-radius: 3px;
+        }
+
+        .nav-actions {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+        }
+
+        .btn {
+            padding: .6rem .9rem;
+            border-radius: 14px;
+            border: 1px solid color-mix(in oklab, var(--text), transparent 85%);
+            background: color-mix(in oklab, var(--surface), transparent 0%);
+            color: var(--text);
+            cursor: pointer;
+            transition: .25s transform, .25s box-shadow, .25s background;
+            box-shadow: var(--shadow);
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 26px rgba(0, 0, 0, .25);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            box-shadow: none;
+        }
+
+        .btn-brand {
+            background: linear-gradient(180deg, var(--brand), var(--brand-2));
+            border-color: transparent;
+        }
+
+        .icon {
+            width: 20px;
+            height: 20px;
+            display: inline-block;
+        }
+
+        /* Hero */
+        .hero {
+            position: relative;
+            overflow: clip;
+        }
+
+        .hero-wrap {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 3.5rem 1rem 2rem;
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.2rem, 3.5vw, 3.6rem);
+            line-height: 1.05;
+            margin: 0 0 1rem;
+        }
+
+        .hero p {
+            color: var(--muted);
+            margin: 0 0 1.2rem;
+        }
+
+        .glow {
+            position: absolute;
+            inset: -20% -10% auto auto;
+            width: 680px;
+            height: 680px;
+            border-radius: 50%;
+            background: radial-gradient(closest-side, rgba(176, 122, 63, .42), transparent 70%);
+            filter: blur(30px);
+            pointer-events: none;
+            opacity: .7;
+            animation: float 12s ease-in-out infinite;
+        }
+
+        /* Floating beans animation */
+        .float-beans {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        .float-beans .fb {
+            position: absolute;
+            width: 16px;
+            height: 24px;
+            border-radius: 50% 50% 47% 53% / 58% 43% 57% 42%;
+            background: radial-gradient(120% 120% at 30% 25%, #c99257, #6b4323 60%);
+            opacity: .25;
+            animation: drift var(--d, 16s) linear infinite;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .05);
+        }
+
+        .float-beans .fb::after {
+            content: "";
+            position: absolute;
+            top: 2px;
+            bottom: 2px;
+            left: 50%;
+            width: 2px;
+            transform: skewX(-10deg);
+            background: rgba(255, 255, 255, .35);
+            border-radius: 2px;
+        }
+
+        @keyframes drift {
+            to {
+                transform: translateY(-120vh) rotate(360deg);
+            }
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0)
+            }
+
+            50% {
+                transform: translateY(-12px)
+            }
+        }
+
+        /* Controls line */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .6rem;
+            align-items: center;
+            margin-top: .6rem;
+        }
+
+        .input {
+            padding: .6rem .8rem;
+            border-radius: 12px;
+            border: 1px solid color-mix(in oklab, var(--text), transparent 85%);
+            background: var(--surface);
+            color: var(--text);
+            outline: none;
+            box-shadow: var(--shadow);
+        }
+
+        .input::placeholder {
+            color: color-mix(in oklab, var(--muted), transparent 0%);
+        }
+
+        .seg {
+            display: flex;
+            background: var(--surface);
+            border: 1px solid color-mix(in oklab, var(--text), transparent 85%);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .seg button {
+            border: 0;
+            background: transparent;
+            padding: .55rem .8rem;
+        }
+
+        .seg button.active {
+            background: color-mix(in oklab, var(--brand), transparent 82%);
+        }
+
+        /* Product grid */
+        .section {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem 4rem;
+        }
+
+        .section h2 {
+            font-size: clamp(1.6rem, 2.3vw, 2.2rem);
+            margin: 0 0 1rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 1.2rem;
+        }
+
+        .card {
+            grid-column: span 12;
+            background: var(--card);
+            border: 1px solid color-mix(in oklab, var(--text), transparent 90%);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transform: translateY(8px);
+            opacity: 0;
+            transition: .6s ease;
+        }
+
+        .card.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        @media (min-width: 520px) {
+            .card {
+                grid-column: span 6;
+            }
+        }
+
+        @media (min-width: 920px) {
+            .card {
+                grid-column: span 4;
+            }
+        }
+
+        .thumb {
+            aspect-ratio: 4/3;
+            background: linear-gradient(180deg, rgba(255, 255, 255, .05), transparent);
+            display: grid;
+            place-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: contrast(1.03) saturate(1.04);
+            transform: scale(1.02);
+            transition: .5s transform ease;
+        }
+
+        .card:hover .thumb img {
+            transform: scale(1.08) rotate(.2deg);
+        }
+
+        .badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: color-mix(in oklab, var(--brand), white 14%);
+            color: #111;
+            font-weight: 700;
+            font-size: .75rem;
+            padding: .3rem .55rem;
+            border-radius: 999px;
+            box-shadow: var(--shadow);
+        }
+
+        .content {
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: .55rem;
+        }
+
+        .title {
+            font-weight: 700;
+            letter-spacing: .2px;
+        }
+
+        .stars {
+            display: flex;
+            gap: 2px;
+            font-size: .9rem;
+            color: #f2c94c;
+        }
+
+        .price-line {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: .6rem;
+        }
+
+        .price {
+            font-weight: 800;
+        }
+
+        /* Cart drawer */
+        .drawer {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: min(420px, 100%);
+            height: 100dvh;
+            background: var(--surface);
+            box-shadow: -20px 0 40px rgba(0, 0, 0, .35);
+            transform: translateX(110%);
+            transition: .5s cubic-bezier(.22, 1, .36, 1);
+            z-index: 60;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .drawer.open {
+            transform: translateX(0);
+        }
+
+        .drawer-head {
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid color-mix(in oklab, var(--text), transparent 88%);
+        }
+
+        .drawer-body {
+            padding: 1rem;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
+            gap: .8rem;
+        }
+
+        .mini {
+            display: grid;
+            grid-template-columns: 64px 1fr auto;
+            gap: .8rem;
+            align-items: center;
+            background: var(--card);
+            border: 1px solid color-mix(in oklab, var(--text), transparent 90%);
+            border-radius: 14px;
+            padding: .5rem;
+        }
+
+        .qty {
+            display: flex;
+            align-items: center;
+            gap: .4rem;
+        }
+
+        .qty button {
+            width: 26px;
+            height: 26px;
+            border-radius: 8px;
+            border: 1px solid color-mix(in oklab, var(--text), transparent 80%);
+            background: transparent;
+            color: var(--text);
+        }
+
+        .drawer-foot {
+            margin-top: auto;
+            padding: 1rem;
+            border-top: 1px solid color-mix(in oklab, var(--text), transparent 88%);
+            display: grid;
+            gap: .6rem;
+        }
+
+        .total-line {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            left: 50%;
+            bottom: 18px;
+            transform: translateX(-50%) translateY(30px);
+            background: var(--surface);
+            border: 1px solid color-mix(in oklab, var(--text), transparent 85%);
+            padding: .7rem 1rem;
+            border-radius: 999px;
+            box-shadow: var(--shadow);
+            opacity: 0;
+            transition: .4s ease;
+            z-index: 70;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid color-mix(in oklab, var(--text), transparent 90%);
+            background: color-mix(in oklab, var(--surface), transparent 0%);
+        }
+
+        .foot {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.6rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        /* Contact modal */
+        .modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            place-items: center;
+            background: rgba(0, 0, 0, .45);
+            z-index: 70;
+        }
+
+        .modal.show {
+            display: grid;
+        }
+
+        .modal-card {
+            width: min(520px, 96vw);
+            background: var(--surface);
+            border: 1px solid color-mix(in oklab, var(--text), transparent 85%);
+            border-radius: 16px;
+            padding: 1rem;
+            box-shadow: var(--shadow);
+        }
+
+        .hint {
+            font-size: .85rem;
+            color: var(--muted);
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="fx-bg"></canvas>
+
+    <!-- NAVBAR -->
+    <nav class="nav">
+        <div class="nav-wrap">
+            <div class="brand"><span class="bean"></span> KopiKita</div>
+            <div class="controls" style="margin-left:1rem">
+                <input id="search" class="input" placeholder="Cari kopi… (Arabica, Latte, dsb)" />
+                <div class="seg" id="filterSeg">
+                    <button data-fil="all" class="active">Semua</button>
+                    <button data-fil="beans">Biji</button>
+                    <button data-fil="ground">Bubuk</button>
+                    <button data-fil="drink">Minuman</button>
+                </div>
+            </div>
+            <div class="nav-actions">
+                <button id="theme" class="btn btn-ghost" title="Toggle tema" aria-label="Toggle tema">🌓</button>
+                <button id="contactBtn" class="btn btn-ghost">Kontak</button>
+                <button id="cartBtn" class="btn btn-brand">🛒 Keranjang <span id="cartCount"
+                        style="margin-left:.4rem; font-weight:800;">0</span></button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <header class="hero">
+        <div class="glow"></div>
+        <div class="float-beans" aria-hidden="true" id="floatBeans"></div>
+        <div class="hero-wrap">
+            <div>
+                <h1>Rasakan <span style="color: var(--brand);">cerita</span> dalam setiap teguk.</h1>
+                <p>Koleksi kopi pilihan dari petani lokal. Segar, berkarakter, dan siap menemani harimu. Tambahkan ke
+                    keranjang dan nikmati proses checkout yang mulus.</p>
+                <div class="controls">
+                    <a href="#katalog" class="btn btn-brand">Belanja Sekarang</a>
+                    <button class="btn btn-ghost" id="scrollLearn">Pelajari</button>
+                </div>
+            </div>
+            <div>
+                <div class="thumb" style="border-radius: 22px;">
+                    <img src="https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?q=80&w=1600&auto=format&fit=crop"
+                        alt="Secangkir kopi" />
+                    <span class="badge">Baru Panen</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- CATALOG -->
+    <section id="katalog" class="section">
+        <h2>Katalog Pilihan</h2>
+        <div class="grid" id="grid"></div>
+    </section>
+
+    <!-- CART DRAWER -->
+    <aside class="drawer" id="drawer" aria-hidden="true" aria-label="Keranjang belanja">
+        <div class="drawer-head">
+            <strong>Keranjang</strong>
+            <button class="btn btn-ghost" id="closeDrawer">Tutup</button>
+        </div>
+        <div class="drawer-body" id="cartItems"></div>
+        <div class="drawer-foot">
+            <div class="total-line"><span>Subtotal</span><strong id="subtotal">Rp0</strong></div>
+            <div class="total-line"><span>Ongkir (estimasi)</span><span id="ship">Rp15.000</span></div>
+            <div class="total-line"><span>Total</span><strong id="grand">Rp0</strong></div>
+            <button class="btn btn-brand" id="checkout">Checkout</button>
+            <span class="hint">Checkout demo (tanpa pembayaran nyata). Data keranjang tersimpan di LocalStorage.</span>
+        </div>
+    </aside>
+
+    <!-- CONTACT MODAL -->
+    <div class="modal" id="contactModal" role="dialog" aria-modal="true" aria-labelledby="contactTitle">
+        <div class="modal-card">
+            <div
+                style="display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:.6rem;">
+                <strong id="contactTitle" style="font-size:1.1rem;">Hubungi Kami</strong>
+                <button class="btn btn-ghost" id="closeContact">✕</button>
+            </div>
+            <form id="contactForm" style="display:grid; gap:.6rem;">
+                <input class="input" name="nama" placeholder="Nama" required>
+                <input class="input" name="email" type="email" placeholder="Email" required>
+                <textarea class="input" name="pesan" placeholder="Pesan" rows="4" required></textarea>
+                <button class="btn btn-brand" type="submit">Kirim</button>
+                <span class="hint">Pesan akan disimpan lokal (demo). Integrasikan ke backend/email sesuai
+                    kebutuhan.</span>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite">Ditambahkan ke keranjang ☕</div>
+
+    <footer>
+        <div class="foot">
+            <div class="brand"><span class="bean"></span> KopiKita</div>
+            <div class="hint">© <span id="yr"></span> KopiKita. Dibuat dengan ❤️ dan kafein.</div>
+        </div>
+    </footer>
+
+    <script>
+        // ---- Utilities ----
+        const fmtIDR = n => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n);
+        const $ = (q, el = document) => el.querySelector(q);
+        const $$ = (q, el = document) => [...el.querySelectorAll(q)];
+
+        // ---- Demo data (Anda bisa ganti dengan fetch ke API) ----
+        const PRODUCTS = [
+            { id: 'a1', name: 'Arabica Gayo', type: 'beans', price: 125000, rating: 4.8, img: 'https://images.unsplash.com/photo-1512568400610-62da28bc8a13?q=80&w=1600&auto=format&fit=crop', tag: 'Best Seller' },
+            { id: 'b2', name: 'Robusta Temanggung', type: 'beans', price: 98000, rating: 4.5, img: 'https://images.unsplash.com/photo-1507133750040-4a8f5702157c?q=80&w=1600&auto=format&fit=crop', tag: 'Signature' },
+            { id: 'c3', name: 'House Blend Bubuk', type: 'ground', price: 72000, rating: 4.6, img: 'https://images.unsplash.com/photo-1504630083234-14187a9df0f5?q=80&w=1600&auto=format&fit=crop', tag: 'Promo' },
+            { id: 'd4', name: 'Espresso Shot (Botol)', type: 'drink', price: 36000, rating: 4.7, img: 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?q=80&w=1600&auto=format&fit=crop', tag: 'Dingin' },
+            { id: 'e5', name: 'Latte 250ml', type: 'drink', price: 39000, rating: 4.9, img: 'https://images.unsplash.com/photo-1453614512568-c4024d13c247?q=80&w=1600&auto=format&fit=crop', tag: 'Favorit' },
+            { id: 'f6', name: 'Cold Brew 300ml', type: 'drink', price: 42000, rating: 4.6, img: 'https://images.unsplash.com/photo-1498804103079-a6351b050096?q=80&w=1600&auto=format&fit=crop', tag: 'Segar' },
+            { id: 'g7', name: 'Toraja Beans', type: 'beans', price: 132000, rating: 4.4, img: 'https://images.unsplash.com/photo-1536520002442-39764a41e987?q=80&w=1600&auto=format&fit=crop', tag: 'Single Origin' },
+            { id: 'h8', name: 'Mocha 250ml', type: 'drink', price: 41000, rating: 4.5, img: 'https://images.unsplash.com/photo-1517705008128-361805f42e86?q=80&w=1600&auto=format&fit=crop', tag: 'Cokelat' },
+            { id: 'i9', name: 'Bubuk Manual Brew', type: 'ground', price: 69000, rating: 4.3, img: 'https://images.unsplash.com/photo-1516570161787-2fd917215a3d?q=80&w=1600&auto=format&fit=crop', tag: 'Barista Choice' }
+        ];
+
+        // ---- State ----
+        const CART_KEY = 'kopikita.cart.v1';
+        const THEME_KEY = 'kopikita.theme';
+        let cart = JSON.parse(localStorage.getItem(CART_KEY) || '{}');
+
+        // ---- Theme ----
+        const savedTheme = localStorage.getItem(THEME_KEY);
+        if (savedTheme === 'light') document.documentElement.classList.add('light');
+        $('#theme').addEventListener('click', () => {
+            document.documentElement.classList.toggle('light');
+            localStorage.setItem(THEME_KEY, document.documentElement.classList.contains('light') ? 'light' : 'dark');
+        });
+
+        // ---- Floating beans ----
+        const fbWrap = $('#floatBeans');
+        const createBean = () => {
+            const el = document.createElement('span');
+            el.className = 'fb';
+            el.style.left = Math.random() * 100 + 'vw';
+            el.style.bottom = '-40px';
+            el.style.opacity = (Math.random() * 0.2 + 0.08).toFixed(2);
+            el.style.filter = `blur(${Math.random() * 1.2}px)`;
+            el.style.setProperty('--d', (12 + Math.random() * 16) + 's');
+            fbWrap.appendChild(el);
+            setTimeout(() => el.remove(), 18000);
+        }
+        setInterval(createBean, 600);
+
+        // ---- Canvas background (soft particles) ----
+        const cnv = document.getElementById('fx-bg');
+        const ctx = cnv.getContext('2d');
+        let W, H; let parts = [];
+        function resize() { W = cnv.width = innerWidth; H = cnv.height = innerHeight; }
+        addEventListener('resize', resize); resize();
+        function make() {
+            parts = Array.from({ length: 80 }, (_, i) => ({
+                x: Math.random() * W,
+                y: Math.random() * H,
+                r: Math.random() * 1.6 + .6,
+                vx: (Math.random() - .5) * .25,
+                vy: (Math.random() - .5) * .25,
+                a: Math.random() * Math.PI * 2
+            }));
+        }
+        make();
+        (function loop() {
+            requestAnimationFrame(loop);
+            ctx.clearRect(0, 0, W, H);
+            for (const p of parts) {
+                p.x += p.vx; p.y += p.vy; p.a += 0.002;
+                if (p.x < 0) p.x = W; if (p.x > W) p.x = 0; if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+                const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 16);
+                g.addColorStop(0, 'rgba(176,122,63,.14)');
+                g.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = g;
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.r * 16, 0, Math.PI * 2); ctx.fill();
+            }
+        })();
+
+        // ---- Render products ----
+        const grid = $('#grid');
+        function starHTML(r) {
+            const s = Math.round(r);
+            return '★★★★★'.slice(0, s) + '<span style="color:var(--muted)">' + '★★★★★'.slice(s) + '</span>'
+        }
+        function productCard(p) {
+            const el = document.createElement('article');
+            el.className = 'card reveal';
+            el.dataset.type = p.type;
+            el.innerHTML = `
+        <div class="thumb">
+          <img src="${p.img}" alt="${p.name}">
+          <span class="badge">${p.tag}</span>
+        </div>
+        <div class="content">
+          <div class="title">${p.name}</div>
+          <div class="stars">${starHTML(p.rating)}</div>
+          <div class="price-line">
+            <div class="price">${fmtIDR(p.price)}</div>
+            <div style="display:flex; gap:.4rem;">
+              <button class="btn btn-ghost" data-act="minus" aria-label="Kurangi">–</button>
+              <input class="input" data-qty type="number" value="1" min="1" style="width:64px; text-align:center; padding:.4rem .2rem">
+              <button class="btn btn-ghost" data-act="plus" aria-label="Tambah">+</button>
+              <button class="btn btn-brand" data-add="${p.id}">Tambah</button>
+            </div>
+          </div>
+        </div>`;
+            const qty = $('[data-qty]', el);
+            $('[data-act="plus"]', el).onclick = () => qty.value = +qty.value + 1;
+            $('[data-act="minus"]', el).onclick = () => qty.value = Math.max(1, +qty.value - 1);
+            $('[data-add]', el).onclick = () => addToCart(p.id, +qty.value);
+            return el;
+        }
+
+        function render(list) {
+            grid.innerHTML = '';
+            list.forEach(p => grid.appendChild(productCard(p)));
+            observeReveal();
+        }
+
+        // ---- Filters & Search ----
+        const seg = $('#filterSeg');
+        seg.addEventListener('click', e => {
+            if (e.target.tagName !== 'BUTTON') return;
+            $$('#filterSeg button').forEach(b => b.classList.toggle('active', b === e.target));
+            applyFilters();
+        });
+        $('#search').addEventListener('input', applyFilters);
+
+        function applyFilters() {
+            const query = $('#search').value.toLowerCase().trim();
+            const type = $('#filterSeg .active').dataset.fil;
+            const filtered = PRODUCTS.filter(p => {
+                const okType = type === 'all' || p.type === type;
+                const okText = !query || p.name.toLowerCase().includes(query);
+                return okType && okText;
+            });
+            render(filtered);
+        }
+
+        // ---- Cart Logic ----
+        function addToCart(id, qty = 1) {
+            cart[id] = (cart[id] || 0) + qty;
+            localStorage.setItem(CART_KEY, JSON.stringify(cart));
+            updateCartUI();
+            flashToast('Ditambahkan ke keranjang ☕');
+        }
+        function setQty(id, qty) {
+            if (qty <= 0) { delete cart[id]; } else { cart[id] = qty; }
+            localStorage.setItem(CART_KEY, JSON.stringify(cart));
+            updateCartUI();
+        }
+        function cartItems() {
+            return Object.entries(cart).map(([id, qty]) => ({
+                ...PRODUCTS.find(p => p.id === id), qty
+            }));
+        }
+        function updateCartUI() {
+            const items = cartItems();
+            $('#cartCount').textContent = items.reduce((a, b) => a + b.qty, 0);
+            const wrap = $('#cartItems');
+            wrap.innerHTML = '';
+            items.forEach(it => {
+                const el = document.createElement('div');
+                el.className = 'mini';
+                el.innerHTML = `
+          <img src="${it.img}" alt="${it.name}" style="width:64px; height:64px; object-fit:cover; border-radius:10px">
+          <div>
+            <div style="font-weight:700">${it.name}</div>
+            <div class="hint">${fmtIDR(it.price)} x ${it.qty}</div>
+          </div>
+          <div class="qty">
+            <button aria-label="kurangi">-</button>
+            <span>${it.qty}</span>
+            <button aria-label="tambah">+</button>
+            <button title="Hapus" style="margin-left:.6rem" class="btn btn-ghost">🗑️</button>
+          </div>`;
+                const [minus, , plus, del] = el.querySelectorAll('.qty button');
+                minus.onclick = () => setQty(it.id, it.qty - 1);
+                plus.onclick = () => setQty(it.id, it.qty + 1);
+                del.onclick = () => { delete cart[it.id]; localStorage.setItem(CART_KEY, JSON.stringify(cart)); updateCartUI(); };
+                wrap.appendChild(el);
+            });
+            const sub = items.reduce((a, b) => a + b.price * b.qty, 0);
+            $('#subtotal').textContent = fmtIDR(sub);
+            const ship = items.length ? 15000 : 0; // demo
+            $('#ship').textContent = fmtIDR(ship);
+            $('#grand').textContent = fmtIDR(sub + ship);
+        }
+
+        // ---- Drawer & Checkout ----
+        const drawer = $('#drawer');
+        $('#cartBtn').onclick = () => { drawer.classList.add('open'); drawer.setAttribute('aria-hidden', 'false'); };
+        $('#closeDrawer').onclick = () => { drawer.classList.remove('open'); drawer.setAttribute('aria-hidden', 'true'); };
+        $('#checkout').onclick = () => {
+            if (!Object.keys(cart).length) { return flashToast('Keranjang masih kosong 😅'); }
+            const order = { items: cartItems(), total: $('#grand').textContent, time: new Date().toISOString() };
+            localStorage.setItem('kopikita.order.last', JSON.stringify(order));
+            flashToast('Checkout berhasil (demo). Lihat console untuk data.');
+            console.log('ORDER_DEMO', order);
+            cart = {}; localStorage.setItem(CART_KEY, JSON.stringify(cart));
+            updateCartUI();
+            drawer.classList.remove('open');
+        };
+
+        // ---- Contact form (demo) ----
+        const contactModal = $('#contactModal');
+        $('#contactBtn').onclick = () => contactModal.classList.add('show');
+        $('#closeContact').onclick = () => contactModal.classList.remove('show');
+        $('#contactForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const data = Object.fromEntries(new FormData(e.target).entries());
+            localStorage.setItem('kopikita.contact.last', JSON.stringify(data));
+            contactModal.classList.remove('show');
+            flashToast('Pesan terkirim (demo)');
+            e.target.reset();
+        });
+
+        // ---- Reveal on scroll ----
+        function observeReveal() {
+            const io = new IntersectionObserver(entries => {
+                entries.forEach(en => { if (en.isIntersecting) { en.target.classList.add('show'); io.unobserve(en.target); } });
+            }, { threshold: .12 });
+            $$('.card').forEach(c => io.observe(c));
+        }
+
+        // ---- Toast ----
+        let toastTimer = null;
+        function flashToast(text) {
+            const t = $('#toast');
+            t.textContent = text; t.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+        }
+
+        // ---- Smooth scroll learn ----
+        $('#scrollLearn').onclick = () => document.getElementById('katalog').scrollIntoView({ behavior: 'smooth' });
+
+        // ---- Init ----
+        (function init() {
+            $('#yr').textContent = new Date().getFullYear();
+            render(PRODUCTS);
+            updateCartUI();
+            applyFilters();
+        })();
+    </script>
+</body>
+
+</html>
